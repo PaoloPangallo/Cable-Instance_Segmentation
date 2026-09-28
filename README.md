@@ -1,102 +1,33 @@
-# ⚡ Electric Cable Segmentation — *Computer Vision Project*
+# Electric Cable Instance Segmentation
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Computer%20Vision-Instance%20Segmentation-00f2ff?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Thin%20Objects-Challenging-red?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Transformer-RF--DETR-purple?style=for-the-badge" />
-</p>
+**Transformer-based instance segmentation for thin electrical cables in aerial imagery**
 
-<p align="center">
-  <b>Instance Segmentation of electric cables in aerial imagery</b><br>
-  An in-depth analysis of <i>Transformer-based</i> architectures for thin-object detection
-</p>
+This computer-vision project investigates a difficult segmentation setting: objects that are extremely thin, elongated and sparsely represented at pixel level.
 
----
+The work evaluates **RF-DETR / Transformer-based instance segmentation** and studies why conventional object-detection metrics can be misleading for filamentary structures such as power cables.
 
-## 🧠 Overview
+## Problem
 
-This project tackles one of the most challenging problems in **applied Computer Vision**: **electric cable instance segmentation**, where objects are:
+Electric cables are challenging because:
 
-* extremely **thin (thin objects)**
-* **elongated** with very small pixel area
-* often **occluded** or visually confused with background structures
+- they occupy a very small fraction of the image;
+- their bounding boxes contain mostly background;
+- long segments can be partially occluded;
+- pixel-level errors can strongly affect overlap metrics even when cable direction is visually correct.
 
-The goal is to evaluate the effectiveness of **RF-DETR** and **Transformer-based models** compared to traditional CNN-based approaches.
+The dataset used in the project contains **1,242 images** split into 842 training and 400 test images.
 
----
+## Model
 
-## 👨‍🎓 Authors
+The main experiments use RF-DETR with a Vision Transformer encoder and query-based instance prediction.
 
-| Name                   | Student ID |
-| ---------------------- | ---------- |
-| **Paolo Pangallo**     | 263594     |
-| **Gianluigi Oricchio** | 269674     |
-
-📍 *University of Calabria*
-📆 *Academic Year 2025 / 2026*
-
----
-
-## 🚧 Problem Statement — Why is it hard?
-
-> Electric cables are not standard vision objects.
-
-### ❌ Main Challenges
-
-* **Extreme sparsity** → cables occupy **< 4%** of the bounding box area
-* **Misleading BBoxes** → classified as *Large* (COCO) but mostly empty
-* **SAM failure** → background noise overwhelms prompt-based segmentation
-* **CNN limitations** → region proposal mechanisms penalize thin structures
-
-### ✅ Why Transformers help
-
-**Global Self-Attention** allows models to:
-
-* capture **long-range dependencies**
-* preserve **semantic continuity** of cables
-* reconnect visually disjoint cable segments
-
----
-
-## 📊 Dataset — Deep Dive
-
-### 📦 Key Statistics
-
-| Metric          | Value                |
-| --------------- | -------------------- |
-| Total images    | **1,242**            |
-| Split           | 842 Train / 400 Test |
-| Avg fill ratio  | **< 4%**             |
-| Median thinness | **1.75 × 10⁻³**      |
-
-### ⚠️ The Dimensional Paradox
-
-```text
-Median Mask Area :   608 px
-Median BBox Area : 20,740 px
-➡️ Bounding boxes are ~34× larger than the actual object
-```
-
-👉 This creates a **conceptual mismatch** with standard COCO-style metrics.
-
----
-
-## 🏗️ Architecture — RF-DETR
-
-**RF-DETR** is a *Transformer-based* detector leveraging:
-
-* **Vision Transformer encoder**
-* **Global Self-Attention**
-* **Query-based instance prediction**
-
-### ⚙️ Main Configuration
+A representative training configuration includes:
 
 ```yaml
 encoder: vit_windowed_small
 resolution: 1200
 num_queries: 200
 epochs: 60
-
 lr: 1e-4
 lr_encoder: 1e-5
 grad_accum_steps: 8
@@ -105,95 +36,49 @@ use_ema: true
 ema_decay: 0.999
 ```
 
-### 🧊 Training Stability
+Training uses differential learning rates, gradient accumulation, gradient clipping and exponential moving averages to improve stability.
 
-* **EMA (Exponential Moving Average)** → smooths Transformer oscillations
-* **Gradient Clipping** → prevents NaN loss
-* **Checkpointing** → safe and reproducible training
+## Results
 
----
+Selected global metrics:
 
-## 🔥 Training Strategy
+| Metric | Value |
+| --- | ---: |
+| mAP@50 | 0.528 |
+| mAR@10 | 0.280 |
 
-### 🎯 Differential Learning Rate
+Performance decreases substantially as scene density grows, highlighting occlusion and instance separation as the main bottlenecks.
 
-* **Decoder**: `1e-4`
-* **Backbone**: `1e-5`
+## Geometry-aware post-processing
 
-👉 The pretrained backbone is updated slowly to preserve generic visual features, while the decoder learns task-specific representations.
+The project also studies PCA-based line reconstruction from predicted masks.
 
-### 📈 Gradient Accumulation
+Even when mask thickness is imperfect, the recovered cable orientation remains highly accurate, with an observed angular error of approximately **0.998°** in the evaluated setting.
 
-* Actual batch size = 1 (VRAM constraint)
-* Accumulation steps = 8
-* Effective batch size ≈ 8
+This motivates a broader conclusion: for thin filamentary objects, geometric consistency can complement standard overlap-based metrics.
 
----
+## Tech stack
 
-## 🧮 Loss Function
+- Python
+- PyTorch
+- Computer Vision
+- RF-DETR
+- Vision Transformers
+- Instance Segmentation
+- PCA / geometric post-processing
 
-The model jointly minimizes **five loss components**:
+## Repository contents
 
-[ \mathcal{L} = L_{ce} + L_{bbox} + L_{giou} + L_{mask_ce} + \color{#00f2ff}{L_{mask_dice}} ]
-
-🔑 **Dice Loss** is critical: it ignores the dominant background and emphasizes real object overlap.
-
----
-
-## 📉 Results
-
-### 📌 Global Metrics
-
-| Metric     | Value     |
-| ---------- | --------- |
-| **mAP@50** | **0.528** |
-| **mAR@10** | **0.280** |
-
-### 📉 Performance vs Scene Density
-
-* 🟢 **0–5 cables** → AP **0.622**, mAR **0.975**
-* 🟡 **10–15 cables** → AP **0.199**
-* 🔴 **25–50 cables** → AP **0.040**
-
-👉 Mutual occlusion becomes the dominant bottleneck in dense scenes.
-
----
-
-## 📐 PCA Line Reconstruction (Post-Processing)
-
-For each predicted mask, cable direction is estimated using **PCA-based geometry**:
-
-```python
-def pca_line_reconstruct(mask_u8):
-    pts = np.stack([xs, ys], axis=1).astype(np.float32)
-    mu = pts.mean(axis=0, keepdims=True)
-    X = pts - mu
-    C = (X.T @ X) / max(1, n - 1)
-    eigvals, eigvecs = np.linalg.eigh(C)
-    v = eigvecs[:, np.argmax(eigvals)]
-    return recon
+```text
+Cable-Instance_Segmentation/
+├── Segmentation.ipynb
+├── checkpoint_best_ema.pth
+└── README.md
 ```
 
-📌 Even when mask thickness degrades, **angular direction remains accurate** (≈ **0.998° error**).
+The notebook contains the end-to-end experimental workflow.
 
----
+## Authors
 
-## 🚀 Conclusions
-
-* RF-DETR is **robust** for thin-object segmentation
-* Standard detection metrics are **insufficient** for filamentary structures
-* **Geometric consistency** (direction) is often more informative than pixel-perfect masks
-
----
-
-## 🙌 Acknowledgements
-
-> Thank you for your attention!
-> We are available for questions or technical discussions.
-
----
-
-<p align="center">
-  <b>Paolo Pangallo & Gianluigi Oricchio</b><br>
-  Computer Vision Project — 2026
-</p>
+**Paolo Pangallo** and **Gianluigi Oricchio**  
+University of Calabria — 2025/2026
