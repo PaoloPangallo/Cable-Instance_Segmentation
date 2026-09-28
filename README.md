@@ -67,12 +67,26 @@ This motivates a broader conclusion: for thin filamentary objects, geometric con
 - Instance Segmentation
 - PCA / geometric post-processing
 
+## Setup
+
+Create an isolated environment and install the notebook dependencies:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+jupyter notebook
+```
+
+The trained checkpoint is tracked through **Git LFS** rather than committed as a regular binary blob.
+
 ## Repository contents
 
 ```text
 Cable-Instance_Segmentation/
 ├── Segmentation.ipynb
 ├── checkpoint_best_ema.pth
+├── requirements.txt
 └── README.md
 ```
 
