@@ -1,7 +1,0 @@
-numpy
-pandas
-matplotlib
-pillow
-pycocotools
-jupyter
-nbformat

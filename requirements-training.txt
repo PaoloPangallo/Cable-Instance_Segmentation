@@ -1,5 +1,0 @@
--r requirements-analysis.txt
-rfdetr
-torch
-torchvision
-supervision
