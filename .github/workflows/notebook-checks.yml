@@ -1,0 +1,40 @@
+name: Notebook refactor checks
+
+on:
+  pull_request:
+    paths:
+      - "Cable_Segmentation_Refactored.ipynb"
+      - "cable_seg/**"
+      - "tests/**"
+      - ".github/workflows/notebook-checks.yml"
+  push:
+    branches:
+      - "refactor/curated-segmentation-notebook"
+
+jobs:
+  static-and-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install lightweight test dependencies
+        run: python -m pip install numpy pytest nbformat
+      - name: Unit tests
+        run: python -m pytest -q tests/test_core.py
+      - name: Validate notebook and code syntax
+        run: |
+          python - <<'PY'
+          import ast
+          import nbformat
+          nb = nbformat.read('Cable_Segmentation_Refactored.ipynb', as_version=4)
+          nbformat.validate(nb)
+          code_cells = [cell for cell in nb.cells if cell.cell_type == 'code']
+          for cell in code_cells:
+              ast.parse(cell.source)
+              assert not cell.outputs
+              assert cell.execution_count is None
+          assert len(nb.cells) == 22
+          print(f'Validated {len(code_cells)} code cells')
+          PY
