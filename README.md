@@ -80,11 +80,19 @@ jupyter notebook
 
 The trained checkpoint is tracked through **Git LFS** rather than committed as a regular binary blob.
 
+## Explore the notebooks
+
+- **[Segmentation_organized.ipynb](Segmentation_organized.ipynb)** — recommended starting point: 17 numbered sections, navigation and experiment context, all 106 original code cells preserved in their research order, and compact saved outputs for faster GitHub rendering.
+- **[Segmentation.ipynb](Segmentation.ipynb)** — original, unabridged research record with complete saved figures, training logs and intermediate experiments.
+
+> The guided notebook is an **exploratory record**, not a one-click reproducible training script. Experiments include different dataset revisions and optional dependencies (SAM, DeepLSD and YOLO). Configure Google Colab/Drive paths and run only the relevant pathway; avoid tuning on held-out test data.
+
 ## Repository contents
 
 ```text
 Cable-Instance_Segmentation/
 ├── Segmentation.ipynb
+├── Segmentation_organized.ipynb
 ├── checkpoint_best_ema.pth
 ├── requirements.txt
 └── README.md
